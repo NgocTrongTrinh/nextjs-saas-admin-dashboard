@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { ConfigProvider } from 'antd';
 import './globals.css';
+import Providers from './providers';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,20 +15,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'My Admin Dashboard',
-  description: 'Saas Admin Dashboard',
+  description: 'SaaS Admin Dashboard',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConfigProvider>{children}</ConfigProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

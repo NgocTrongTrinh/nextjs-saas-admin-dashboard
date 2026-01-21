@@ -2,8 +2,8 @@
 
 import { Layout, Dropdown, Avatar } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { useAuthStore } from '@/stores/auth.store';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth.store';
 
 const { Header } = Layout;
 
