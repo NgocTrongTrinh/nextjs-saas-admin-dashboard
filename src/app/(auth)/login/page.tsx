@@ -1,8 +1,8 @@
 'use client';
 
+import { useAuthStore } from '@/stores/auth.store';
 import { Button, Card } from 'antd';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth.store';
 
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
