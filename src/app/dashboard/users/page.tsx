@@ -9,6 +9,10 @@ import CreateEditUserModal from '@/modules/users/CreateUserModal';
 import { UserRoleOptions } from '@/libs/data/user-management';
 import { UserFormValues } from '@/modules/users/users.schema';
 import { EditOutlined, UserAddOutlined } from '@ant-design/icons';
+import PermissionGuard from '@/components/auth/PermissionGuard';
+import { PERMISSIONS } from '@/libs/auth/permissions';
+import { useAuth } from '@/contexts/AuthContext';
+import { hasPermission } from '@/libs/auth/hasPermission';
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
@@ -17,6 +21,9 @@ export default function UsersPage() {
     data: UserFormValues | null;
     mode: 'Create' | 'Edit';
   } | null>(null);
+
+  const { role: currentRole } = useAuth();
+  const canEditUser = hasPermission(currentRole, PERMISSIONS.USER_EDIT);
 
   const { data, isLoading } = useQuery({
     queryKey: [API_KEY.USER_LIST, page, role],
@@ -42,28 +49,28 @@ export default function UsersPage() {
       dataIndex: 'role',
       render: (value: string) => <span>{value}</span>,
     },
-    {
-      title: 'Action',
-      dataIndex: 'action',
-      align: 'center' as const,
-      with: 124,
-      render: (_: any, record: UserFormValues) => (
-        <div className="flex justify-center">
-          <Button
-            className="rounded w-25.25 h-10.5"
-            onClick={() =>
-              setModalState({
-                data: record,
-                mode: 'Edit',
-              })
-            }
-            icon={<EditOutlined />}
-          >
-            Edit
-          </Button>
-        </div>
-      ),
-    },
+    ...(canEditUser
+      ? [
+          {
+            title: 'Action',
+            align: 'center' as const,
+            width: 124,
+            render: (_: any, record: UserFormValues) => (
+              <Button
+                onClick={() =>
+                  setModalState({
+                    data: record,
+                    mode: 'Edit',
+                  })
+                }
+                icon={<EditOutlined />}
+              >
+                Edit
+              </Button>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -80,18 +87,20 @@ export default function UsersPage() {
           />
         </div>
 
-        <Button
-          type="primary"
-          onClick={() =>
-            setModalState({
-              data: null,
-              mode: 'Create',
-            })
-          }
-          icon={<UserAddOutlined className="text-lg" />}
-        >
-          Add User
-        </Button>
+        <PermissionGuard permission={PERMISSIONS.USER_CREATE}>
+          <Button
+            type="primary"
+            onClick={() =>
+              setModalState({
+                data: null,
+                mode: 'Create',
+              })
+            }
+            icon={<UserAddOutlined className="text-lg" />}
+          >
+            Add User
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Table
