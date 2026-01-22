@@ -7,6 +7,7 @@ export const userSchema = z.object({
     .email(VALIDATE_MESSAGE.INVALID_EMAIL)
     .min(1, VALIDATE_MESSAGE.REQUIRED),
   role: z.string().min(1, VALIDATE_MESSAGE.REQUIRED),
+  id: z.string().optional(),
 });
 
 export type UserFormValues = z.infer<typeof userSchema>;
