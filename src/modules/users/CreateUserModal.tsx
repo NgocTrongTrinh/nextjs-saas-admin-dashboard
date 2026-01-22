@@ -3,6 +3,7 @@
 import { Modal } from 'antd';
 import UserForm from './UserForm';
 import { UserFormValues } from './users.schema';
+import { useCreateUser, useUpdateUser } from '@/hooks/useUserMutation';
 
 type Props = {
   open: boolean;
@@ -17,9 +18,18 @@ export default function CreateEditUserModal({
   isEditing = false,
   initialValues,
 }: Props) {
+  const userId = initialValues?.id;
+  const createMutation = useCreateUser();
+  const updateMutation = useUpdateUser(userId as string);
+
   const handleSubmit = (values: UserFormValues) => {
-    console.log('Create user:', values);
-    onClose();
+    const { id, ...payload } = values;
+
+    const mutation = isEditing
+      ? updateMutation.mutate({ id, ...payload }, { onSuccess: onClose })
+      : createMutation.mutate(payload, { onSuccess: onClose });
+
+    return mutation;
   };
 
   return (
