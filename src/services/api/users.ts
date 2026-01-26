@@ -16,16 +16,31 @@ export const fetchUsers = async (
   page: number,
   pageSize: number,
   role?: string,
+  search?: string,
 ) => {
   await new Promise((r) => setTimeout(r, 400));
 
-  let data = mockUsers;
+  let data = [...mockUsers];
+
   if (role) {
     data = data.filter((u) => u.role === role);
   }
 
+  if (search?.trim()) {
+    const keyword = search.trim().toLowerCase();
+
+    data = data.filter(
+      (u) =>
+        u.name.toLowerCase().includes(keyword) ||
+        u.email.toLowerCase().includes(keyword),
+    );
+  }
+
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+
   return {
-    data: data.slice((page - 1) * pageSize, page * pageSize),
+    data: data.slice(start, end),
     total: data.length,
   };
 };
