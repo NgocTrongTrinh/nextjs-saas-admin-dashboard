@@ -14,6 +14,7 @@ import { PERMISSIONS } from '@/libs/auth/permissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/libs/auth/hasPermission';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
@@ -24,7 +25,34 @@ export default function UsersPage() {
     mode: 'Create' | 'Edit';
   } | null>(null);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const debouncedSearch = useDebounce(search);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (page) params.set('page', String(page));
+    if (role) params.set('role', role);
+    if (debouncedSearch) params.set('search', debouncedSearch);
+
+    router.replace(`?${params.toString()}`);
+  }, [page, role, debouncedSearch]);
+
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const roleParam = searchParams.get('role');
+    const searchParam = searchParams.get('search');
+
+    if (pageParam) setPage(Number(pageParam));
+    if (roleParam) setRole(roleParam);
+    if (searchParam) setSearch(searchParam);
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, role]);
 
   const { role: currentRole } = useAuth();
   const canEditUser = hasPermission(currentRole, PERMISSIONS.USER_EDIT);
@@ -34,10 +62,6 @@ export default function UsersPage() {
     queryFn: () => fetchUsers(page, 10, role, debouncedSearch),
     placeholderData: keepPreviousData,
   });
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, role]);
 
   const columns = [
     {
