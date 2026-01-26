@@ -2,20 +2,18 @@
 
 import { Table, Select, Button, Input } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { fetchUsers } from '../../../services/api/users';
-import { API_KEY } from '@/settings/apiKeys';
 import CreateEditUserModal from '@/modules/users/CreateUserModal';
 import { UserRoleOptions } from '@/libs/data/user-management';
 import { UserFormValues } from '@/modules/users/users.schema';
 import { EditOutlined, UserAddOutlined } from '@ant-design/icons';
 import PermissionGuard from '@/components/auth/PermissionGuard';
-import { PERMISSIONS } from '@/libs/auth/permissions';
+import { Permission, PERMISSIONS } from '@/libs/auth/permissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/libs/auth/hasPermission';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUsersQuery } from '@/hooks/user/useUsersQuery';
+import { USER_COLUMNS } from '@/modules/users/users.columns';
 
 export default function UsersPage() {
   const [modalState, setModalState] = useState<{
@@ -68,51 +66,41 @@ export default function UsersPage() {
   }, [debouncedSearch, role]);
 
   const { role: currentRole } = useAuth();
-  const canEditUser = hasPermission(currentRole, PERMISSIONS.USER_EDIT);
 
-  const columns = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      sorter: true,
-      width: 480,
-      render: (value: string) => <span>{value}</span>,
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      sorter: true,
-      width: 480,
-      render: (value: string) => <span>{value}</span>,
-    },
-    {
-      title: 'Role',
-      dataIndex: 'role',
-      render: (value: string) => <span>{value}</span>,
-    },
-    ...(canEditUser
-      ? [
-          {
-            title: 'Action',
-            align: 'center' as const,
-            width: 124,
-            render: (_: any, record: UserFormValues) => (
-              <Button
-                onClick={() =>
-                  setModalState({
-                    data: record,
-                    mode: 'Edit',
-                  })
-                }
-                icon={<EditOutlined />}
-              >
-                Edit
-              </Button>
-            ),
-          },
-        ]
-      : []),
-  ];
+  const columns = USER_COLUMNS.filter(
+    (col) =>
+      !col.permission ||
+      hasPermission(currentRole, col.permission as Permission),
+  ).map((col) => {
+    if (col.key === 'action') {
+      return {
+        title: col.title,
+        align: 'center' as const,
+        width: 124,
+        render: (_: any, record: UserFormValues) => (
+          <Button
+            onClick={() =>
+              setModalState({
+                data: record,
+                mode: 'Edit',
+              })
+            }
+            icon={<EditOutlined />}
+          >
+            Edit
+          </Button>
+        ),
+      };
+    }
+
+    return {
+      title: col.title,
+      dataIndex: col.dataIndex,
+      width: col.width,
+      sorter: col.sortable,
+      render: (value: any) => <span>{value}</span>,
+    };
+  });
 
   return (
     <div>
