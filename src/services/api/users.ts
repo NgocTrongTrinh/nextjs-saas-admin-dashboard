@@ -17,6 +17,8 @@ export const fetchUsers = async (
   pageSize: number,
   role?: string,
   search?: string,
+  sortBy?: string,
+  sortOrder?: string,
 ) => {
   await new Promise((r) => setTimeout(r, 400));
 
@@ -34,6 +36,14 @@ export const fetchUsers = async (
         u.name.toLowerCase().includes(keyword) ||
         u.email.toLowerCase().includes(keyword),
     );
+  }
+
+  if (sortBy && sortOrder) {
+    data = [...data].sort((a: any, b: any) => {
+      if (a[sortBy] < b[sortBy]) return sortOrder === 'asc' ? -1 : 1;
+      if (a[sortBy] > b[sortBy]) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
   const start = (page - 1) * pageSize;

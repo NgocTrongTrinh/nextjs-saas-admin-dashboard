@@ -1,7 +1,7 @@
 'use client';
 
 import { Table, Select, Button, Input } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { fetchUsers } from '../../../services/api/users';
 import { API_KEY } from '@/settings/apiKeys';
@@ -15,25 +15,42 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/libs/auth/hasPermission';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useUsersQuery } from '@/hooks/user/useUsersQuery';
 
 export default function UsersPage() {
-  const [page, setPage] = useState(1);
-  const [role, setRole] = useState<string | undefined>();
-  const [search, setSearch] = useState('');
   const [modalState, setModalState] = useState<{
     data: UserFormValues | null;
     mode: 'Create' | 'Edit';
   } | null>(null);
 
+  const isMounted = useRef(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const {
+    data,
+    isLoading,
+    page,
+    setPage,
+    role,
+    setRole,
+    search,
+    setSearch,
+    setSortBy,
+    setSortOrder,
+  } = useUsersQuery();
 
   const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
-    const params = new URLSearchParams();
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
 
-    if (page) params.set('page', String(page));
+    const params = new URLSearchParams();
+    if (page !== 1) params.set('page', String(page));
     if (role) params.set('role', role);
     if (debouncedSearch) params.set('search', debouncedSearch);
 
@@ -41,13 +58,9 @@ export default function UsersPage() {
   }, [page, role, debouncedSearch]);
 
   useEffect(() => {
-    const pageParam = searchParams.get('page');
-    const roleParam = searchParams.get('role');
-    const searchParam = searchParams.get('search');
-
-    if (pageParam) setPage(Number(pageParam));
-    if (roleParam) setRole(roleParam);
-    if (searchParam) setSearch(searchParam);
+    setPage(Number(searchParams.get('page')) || 1);
+    setRole(searchParams.get('role') || undefined);
+    setSearch(searchParams.get('search') || '');
   }, []);
 
   useEffect(() => {
@@ -57,22 +70,18 @@ export default function UsersPage() {
   const { role: currentRole } = useAuth();
   const canEditUser = hasPermission(currentRole, PERMISSIONS.USER_EDIT);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: [API_KEY.USER_LIST, page, role, debouncedSearch],
-    queryFn: () => fetchUsers(page, 10, role, debouncedSearch),
-    placeholderData: keepPreviousData,
-  });
-
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
+      sorter: true,
       width: 480,
       render: (value: string) => <span>{value}</span>,
     },
     {
       title: 'Email',
       dataIndex: 'email',
+      sorter: true,
       width: 480,
       render: (value: string) => <span>{value}</span>,
     },
@@ -146,6 +155,16 @@ export default function UsersPage() {
         loading={{
           spinning: isLoading,
           tip: 'Loading users...',
+        }}
+        onChange={(_, __, sorter: any) => {
+          if (!sorter.order) {
+            setSortBy(undefined);
+            setSortOrder(undefined);
+            return;
+          }
+
+          setSortBy(sorter.field);
+          setSortOrder(sorter.order === 'ascend' ? 'asc' : 'desc');
         }}
         dataSource={data?.data}
         pagination={{

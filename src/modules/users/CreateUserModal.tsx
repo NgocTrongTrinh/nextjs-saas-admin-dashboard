@@ -3,7 +3,7 @@
 import { Modal } from 'antd';
 import UserForm from './UserForm';
 import { UserFormValues } from './users.schema';
-import { useCreateUser, useUpdateUser } from '@/hooks/useUserMutation';
+import { useCreateUser, useUpdateUser } from '@/hooks/user/useUserMutation';
 
 type Props = {
   open: boolean;
