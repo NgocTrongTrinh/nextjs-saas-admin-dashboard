@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { Role } from '@/libs/auth/roles';
+import { useAuthStore } from '@/stores/auth.store';
 
 type AuthContextType = {
   role: Role;
@@ -15,7 +16,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // NOTE: mock role
-  const role: Role = 'admin';
+  const role: Role = useAuthStore((s) => s.role);
 
   return (
     <AuthContext.Provider value={{ role }}>{children}</AuthContext.Provider>
